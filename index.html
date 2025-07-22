@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Approve Deposits - Echoplus</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .deposit {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+    }
+    .deposit p {
+      margin: 4px 0;
+    }
+    .approve-btn {
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .approve-btn:hover {
+      background: #218838;
+    }
+  </style>
+</head>
+<body>
+  <h1>Approve Pending Deposits</h1>
+  <div id="depositList">Loading...</div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
+      authDomain: "echoplus-e9606.firebaseapp.com",
+      projectId: "echoplus-e9606",
+      storageBucket: "echoplus-e9606.appspot.com",
+      messagingSenderId: "674979906304",
+      appId: "1:674979906304:web:7864593a26f571a268a9e5",
+      measurementId: "G-TYC9PSQFR2"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const depositList = document.getElementById('depositList');
+
+    // Fetch pending deposits
+    async function fetchDeposits() {
+      const snapshot = await db.collection("deposits").where("status", "==", "pending").get();
+      depositList.innerHTML = "";
+
+      if (snapshot.empty) {
+        depositList.innerHTML = "<p>No pending deposits found.</p>";
+        return;
+      }
+
+      for (const doc of snapshot.docs) {
+        const deposit = doc.data();
+        const userSnap = await db.collection("users").doc(deposit.userId).get();
+        const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
+
+        const div = document.createElement("div");
+        div.className = "deposit";
+        div.innerHTML = `
+          <p><strong>Amount:</strong> UGX ${deposit.amount}</p>
+          <p><strong>Method:</strong> ${deposit.method}</p>
+          <p><strong>Phone:</strong> ${deposit.phone}</p>
+          <p><strong>Sim Card Owner:</strong> ${deposit.simCardOwner}</p>
+          <p><strong>User:</strong> ${user.name} (${user.phone})</p>
+          <p><strong>Status:</strong> ${deposit.status}</p>
+          <button class="approve-btn" onclick="markAsPaid('${doc.id}')">Mark as Paid</button>
+        `;
+        depositList.appendChild(div);
+      }
+    }
+
+    // Mark deposit as paid
+    async function markAsPaid(depositId) {
+      const confirmAction = confirm("Are you sure you want to mark this deposit as paid?");
+      if (!confirmAction) return;
+
+      try {
+        await db.collection("deposits").doc(depositId).update({ status: "paid" });
+        alert("Deposit marked as paid.");
+        fetchDeposits(); // Refresh list
+      } catch (error) {
+        console.error("Error updating status:", error);
+        alert("Failed to update deposit.");
+      }
+    }
+
+    fetchDeposits();
+  </script>
+</body>
+</html>
