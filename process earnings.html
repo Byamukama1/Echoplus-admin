@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Distribute Daily Earnings - Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 20px;
+    }
+
+    h1 {
+      color: #3f37c9;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      background-color: #28a745;
+      color: white;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn:hover {
+      background-color: #218838;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 15px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Distribute Daily Earnings</h1>
+  <button class="btn" onclick="distributeEarnings()">
+    <i class="fas fa-coins"></i> Distribute Earnings
+  </button>
+  <div class="status" id="statusMessage"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
+      authDomain: "echoplus-e9606.firebaseapp.com",
+      projectId: "echoplus-e9606",
+      storageBucket: "echoplus-e9606.appspot.com",
+      messagingSenderId: "674979906304",
+      appId: "1:674979906304:web:7864593a26f571a268a9e5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function distributeEarnings() {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = "Processing...";
+
+      try {
+        const snapshot = await db.collection('products')
+          .where('status', '==', 'active')
+          .get();
+
+        const userMap = {};
+        const batch = db.batch();
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const ref = doc.ref;
+
+          if (data.remainingDays > 0) {
+            const earnToday = data.dailyIncome || 0;
+
+            batch.update(ref, {
+              amountEarnedSoFar: (data.amountEarnedSoFar || 0) + earnToday,
+              remainingAmount: (data.remainingAmount || 0) - earnToday,
+              remainingDays: data.remainingDays - 1
+            });
+
+            if (!userMap[data.userId]) userMap[data.userId] = 0;
+            userMap[data.userId] += earnToday;
+          }
+        });
+
+        for (let userId in userMap) {
+          const userRef = db.collection('users').doc(userId);
+          const earned = userMap[userId];
+
+          batch.update(userRef, {
+            totalEarnings: firebase.firestore.FieldValue.increment(earned),
+            todaysEarnings: earned // optional reset or add
+          });
+        }
+
+        await batch.commit();
+        statusEl.textContent = "✅ Daily earnings distributed successfully.";
+      } catch (err) {
+        console.error("Error:", err);
+        statusEl.textContent = "❌ Failed to distribute earnings.";
+      }
+    }
+  </script>
+</body>
+</html>
