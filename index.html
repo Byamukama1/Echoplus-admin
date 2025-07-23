@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin - Approve Deposits & Withdraws | Echoplus</title>
+  <title>Admin Dashboard - Echoplus</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
@@ -108,7 +107,6 @@
   <div id="withdrawList">Loading withdraws...</div>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
       authDomain: "echoplus-e9606.firebaseapp.com",
@@ -120,6 +118,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     const depositList = document.getElementById("depositList");
     const withdrawList = document.getElementById("withdrawList");
@@ -129,7 +128,7 @@
       depositList.innerHTML = "";
 
       if (snapshot.empty) {
-        depositList.innerHTML = "<p class='no-items'>No pending deposits found.or poor internet connection</p>";
+        depositList.innerHTML = "<p class='no-items'>No pending deposits found or poor internet connection.</p>";
         return;
       }
 
@@ -160,7 +159,7 @@
       withdrawList.innerHTML = "";
 
       if (snapshot.empty) {
-        withdrawList.innerHTML = "<p class='no-items'>No pending withdraws found.Or poor internet connection</p>";
+        withdrawList.innerHTML = "<p class='no-items'>No pending withdraws found or poor internet connection.</p>";
         return;
       }
 
@@ -226,34 +225,36 @@
       }
     }
 
+    // Load Data
     fetchDeposits();
     fetchWithdraws();
   </script>
+
+  <!-- Admin Access and Session Timeout -->
   <script>
-  const allowedAdmins = [
-    "nuclearphillipsug@gmail.com",
-    "byamukamambabazimentor2@gmail.com"
-  ];
+    const allowedAdmins = [
+      "nuclearphillipsug@gmail.com",
+      "byamukamambabazimentor2@gmail.com"
+    ];
 
-  const auth = firebase.auth();
-  const loginTime = localStorage.getItem("adminLoginTime");
+    const loginTime = localStorage.getItem("adminLoginTime");
 
-  auth.onAuthStateChanged(user => {
-    if (!user || !allowedAdmins.includes(user.email)) {
-      alert("❌ Access denied. Admins only.");
-      window.location.href = "admin-login.html";
-      return;
-    }
-
-    const now = Date.now();
-    if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
-      auth.signOut().then(() => {
-        localStorage.removeItem("adminLoginTime");
-        alert("⏰ Session expired. Please log in again.");
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert("❌ Access denied. Admins only.");
         window.location.href = "admin-login.html";
-      });
-    }
-  });
-</script>
+        return;
+      }
+
+      const now = Date.now();
+      if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
+        firebase.auth().signOut().then(() => {
+          localStorage.removeItem("adminLoginTime");
+          alert("⏰ Session expired. Please log in again.");
+          window.location.href = "admin-login.html";
+        });
+      }
+    });
+  </script>
 </body>
 </html>
