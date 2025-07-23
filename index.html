@@ -242,7 +242,7 @@
     firebase.auth().onAuthStateChanged(user => {
       if (!user || !allowedAdmins.includes(user.email)) {
         alert("❌ Access denied. Admins only.");
-        window.location.href = "admin-login.html";
+        window.location.href = "login.html";
         return;
       }
 
