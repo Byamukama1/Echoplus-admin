@@ -129,7 +129,7 @@
       depositList.innerHTML = "";
 
       if (snapshot.empty) {
-        depositList.innerHTML = "<p class='no-items'>No pending deposits found.</p>";
+        depositList.innerHTML = "<p class='no-items'>No pending deposits found.or poor internet connection</p>";
         return;
       }
 
@@ -160,7 +160,7 @@
       withdrawList.innerHTML = "";
 
       if (snapshot.empty) {
-        withdrawList.innerHTML = "<p class='no-items'>No pending withdraws found.</p>";
+        withdrawList.innerHTML = "<p class='no-items'>No pending withdraws found.Or poor internet connection</p>";
         return;
       }
 
@@ -229,5 +229,31 @@
     fetchDeposits();
     fetchWithdraws();
   </script>
+  <script>
+  const allowedAdmins = [
+    "nuclearphillipsug@gmail.com",
+    "byamukamambabazimentor2@gmail.com"
+  ];
+
+  const auth = firebase.auth();
+  const loginTime = localStorage.getItem("adminLoginTime");
+
+  auth.onAuthStateChanged(user => {
+    if (!user || !allowedAdmins.includes(user.email)) {
+      alert("❌ Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+      return;
+    }
+
+    const now = Date.now();
+    if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
+      auth.signOut().then(() => {
+        localStorage.removeItem("adminLoginTime");
+        alert("⏰ Session expired. Please log in again.");
+        window.location.href = "admin-login.html";
+      });
+    }
+  });
+</script>
 </body>
 </html>
