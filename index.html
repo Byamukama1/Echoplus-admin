@@ -287,8 +287,7 @@
     </div>
   </div>
 
-  
-  <script>
+ <script>
   const firebaseConfig = {
     apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
     authDomain: "echoplus-e9606.firebaseapp.com",
@@ -310,12 +309,7 @@
     depositList.innerHTML = "";
 
     if (snapshot.empty) {
-      depositList.innerHTML = `
-        <div class="no-items">
-          <i class="fas fa-inbox"></i>
-          <p>No pending deposits found</p>
-        </div>
-      `;
+      depositList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending deposits found</p></div>`;
       return;
     }
 
@@ -340,9 +334,72 @@
           <button class="btn reject-btn" onclick="rejectDeposit('${doc.id}')">
             <i class="fas fa-times"></i> Reject
           </button>
-        </div>
-      `;
+        </div>`;
       depositList.appendChild(div);
+    }
+  }
+
+  async function markDepositAsPaid(depositId, amount, userId) {
+    if (!confirm("Mark this deposit as paid and reward referrer if applicable?")) return;
+
+    try {
+      const depositRef = db.collection("deposits").doc(depositId);
+      const userRef = db.collection("users").doc(userId);
+      const userSnap = await userRef.get();
+
+      if (!userSnap.exists) throw new Error("User not found");
+      const userData = userSnap.data();
+
+      // Update deposit status
+      await depositRef.update({ status: "paid" });
+
+      // Update user deposit balances
+      const newTotal = (userData.totalDeposit || 0) + amount;
+      const newUninvested = (userData.uninvestedDeposit || 0) + amount;
+
+      await userRef.update({
+        totalDeposit: newTotal,
+        uninvestedDeposit: newUninvested
+      });
+
+      // Award referral bonus if referrer exists
+      const refPhone = userData.referrerPhone;
+      if (refPhone) {
+        const refSnap = await db.collection("users").where("phone", "==", refPhone).limit(1).get();
+        if (!refSnap.empty) {
+          const refDoc = refSnap.docs[0];
+          const refId = refDoc.id;
+          const refData = refDoc.data();
+
+          const alreadyAwarded = (refData.referralAwardedUsers || []).includes(userId);
+
+          if (!alreadyAwarded) {
+            const bonus = amount * 0.25;
+
+            // Record the referral bonus
+            await db.collection("earnings").add({
+              userId: refId,
+              amount: bonus,
+              type: "referral",
+              date: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Update referrer's earnings and mark as awarded
+            await db.collection("users").doc(refId).update({
+              totalEarnings: (refData.totalEarnings || 0) + bonus,
+              referralAwardedUsers: firebase.firestore.FieldValue.arrayUnion(userId)
+            });
+
+            alert(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
+          }
+        }
+      }
+
+      alert("✅ Deposit marked as paid.");
+      fetchDeposits();
+    } catch (error) {
+      console.error("❌ Error approving deposit:", error);
+      alert("❌ Failed to approve deposit.");
     }
   }
 
@@ -351,12 +408,7 @@
     withdrawList.innerHTML = "";
 
     if (snapshot.empty) {
-      withdrawList.innerHTML = `
-        <div class="no-items">
-          <i class="fas fa-inbox"></i>
-          <p>No pending withdraws found</p>
-        </div>
-      `;
+      withdrawList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending withdraws found</p></div>`;
       return;
     }
 
@@ -380,150 +432,52 @@
           <button class="btn reject-btn" onclick="rejectWithdraw('${doc.id}')">
             <i class="fas fa-times"></i> Reject
           </button>
-        </div>
-      `;
+        </div>`;
       withdrawList.appendChild(div);
     }
   }
 
-  async function markDepositAsPaid(depositId, amount, userId) {
-    const confirmAction = confirm("Mark this deposit as paid and reward referrer if applicable?");
-    if (!confirmAction) return;
+  async function markWithdrawAsPaid(id) {
+    if (!confirm("Mark this withdraw as paid?")) return;
 
     try {
-      const depositRef = db.collection("deposits").doc(depositId);
-      const userRef = db.collection("users").doc(userId);
-      const userSnap = await userRef.get();
-
-      if (!userSnap.exists) throw new Error("User not found");
-      const userData = userSnap.data();
-
-      // Mark as paid
-      await depositRef.update({ status: "paid" });
-
-      // Update deposit balances
-      const newTotal = (userData.totalDeposit || 0) + amount;
-      const newUninvested = (userData.uninvestedDeposit || 0) + amount;
-
-      await userRef.update({
-        totalDeposit: newTotal,
-        uninvestedDeposit: newUninvested
-      });
-
-      // Award referrer if not yet awarded
-      const refPhone = userData.referrerPhone;
-      if (refPhone) {
-        const refSnap = await db.collection("users").where("phone", "==", refPhone).limit(1).get();
-
-        if (!refSnap.empty) {
-          const refDoc = refSnap.docs[0];
-          const refId = refDoc.id;
-          const refData = refDoc.data();
-
-          const alreadyAwarded = (refData.referralAwardedUsers || []).includes(userId);
-
-          if (!alreadyAwarded) {
-            const bonus = amount * 0.25;
-
-            // Add earning record
-            await db.collection("earnings").add({
-              userId: refId,
-              amount: bonus,
-              type: "referral",
-              date: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Update referrer's earnings and referral history
-            await db.collection("users").doc(refId).update({
-              totalEarnings: (refData.totalEarnings || 0) + bonus,
-              referralAwardedUsers: firebase.firestore.FieldValue.arrayUnion(userId)
-            });
-
-            alert(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
-          }
-        }
-      }
-
-      alert("✅ Deposit marked as paid.");
-      fetchDeposits();
-    } catch (error) {
-      console.error("Error approving deposit:", error);
-      alert("❌ Failed to approve deposit.");
-    }
-  }
-
-  async function markWithdrawAsPaid(withdrawId) {
-    const confirmAction = confirm("Mark this withdraw as paid?");
-    if (!confirmAction) return;
-
-    try {
-      await db.collection("withdraws").doc(withdrawId).update({ status: "paid" });
+      await db.collection("withdraws").doc(id).update({ status: "paid" });
       alert("✅ Withdraw marked as paid.");
       fetchWithdraws();
     } catch (error) {
-      console.error("Error approving withdraw:", error);
+      console.error("❌ Error approving withdraw:", error);
       alert("❌ Failed to approve withdraw.");
     }
   }
 
-  async function rejectDeposit(depositId) {
-    const confirmAction = confirm("Reject this deposit?");
-    if (!confirmAction) return;
+  async function rejectDeposit(id) {
+    if (!confirm("Reject this deposit?")) return;
 
     try {
-      await db.collection("deposits").doc(depositId).update({ status: "rejected" });
+      await db.collection("deposits").doc(id).update({ status: "rejected" });
       alert("🚫 Deposit has been rejected.");
       fetchDeposits();
     } catch (error) {
-      console.error("Error rejecting deposit:", error);
+      console.error("❌ Error rejecting deposit:", error);
       alert("❌ Failed to reject deposit.");
     }
   }
 
-  async function rejectWithdraw(withdrawId) {
-    const confirmAction = confirm("Reject this withdraw?");
-    if (!confirmAction) return;
+  async function rejectWithdraw(id) {
+    if (!confirm("Reject this withdraw?")) return;
 
     try {
-      await db.collection("withdraws").doc(withdrawId).update({ status: "rejected" });
+      await db.collection("withdraws").doc(id).update({ status: "rejected" });
       alert("🚫 Withdraw has been rejected.");
       fetchWithdraws();
     } catch (error) {
-      console.error("Error rejecting withdraw:", error);
+      console.error("❌ Error rejecting withdraw:", error);
       alert("❌ Failed to reject withdraw.");
     }
   }
 
-  // Load data
   fetchDeposits();
   fetchWithdraws();
-</script>
-
-<!-- Admin Access and Session Timeout -->
-<script>
-  const allowedAdmins = [
-    "nuclearphillipsug@gmail.com",
-    "byamukamambabazimentor2@gmail.com"
-  ];
-
-  const loginTime = localStorage.getItem("adminLoginTime");
-
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user || !allowedAdmins.includes(user.email)) {
-      alert("❌ Access denied. Admins only.");
-      window.location.href = "login.html";
-      return;
-    }
-
-    const now = Date.now();
-    if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
-      firebase.auth().signOut().then(() => {
-        localStorage.removeItem("adminLoginTime");
-        alert("⏰ Session expired. Please log in again.");
-        window.location.href = "login.html";
-      });
-    }
-  });
 </script>
 </body>
 </html>
