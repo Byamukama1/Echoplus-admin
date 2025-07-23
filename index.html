@@ -1,89 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Approve Deposits - Echoplus</title>
+  <meta charset="UTF-8" />
+  <title>Admin - Approve Deposits & Withdraws | Echoplus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
   <style>
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
       padding: 20px;
-      background: #f9f9f9;
     }
+
     h1 {
-      color: #333;
+      margin-bottom: 20px;
+      color: #1f2937;
     }
-    .deposit {
-      background: white;
-      border: 1px solid #ccc;
-      padding: 16px;
-      margin-bottom: 12px;
-      border-radius: 8px;
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .deposit p {
-      margin: 4px 0;
-    }
-    .approve-btn {
-      background: #28a745;
-      color: white;
-      padding: 8px 12px;
+
+    .top-bar button {
+      background: #3f37c9;
+      color: #fff;
       border: none;
-      border-radius: 5px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+      background: #fff;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .deposit { border-left: 5px solid #3f37c9; }
+    .withdraw { border-left: 5px solid #f97316; }
+
+    .card p {
+      margin: 6px 0;
+      font-size: 15px;
+    }
+
+    .approve-btn {
+      background-color: #22c55e;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 10px;
       cursor: pointer;
     }
+
     .approve-btn:hover {
-      background: #218838;
+      background-color: #16a34a;
+    }
+
+    .section-title {
+      margin-top: 40px;
+      margin-bottom: 15px;
+      font-size: 20px;
+      color: #374151;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
+    }
+
+    .no-items {
+      text-align: center;
+      font-size: 16px;
+      color: #6b7280;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>Approve Pending Deposits</h1>
 
-  <!-- Earnings Button -->
-  <button onclick="window.location.href='process earnings.html'" style="
-    margin: 20px 0;
-    padding: 10px 20px;
-    background-color: #3f37c9;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  ">
-    <i class="fas fa-coins" style="margin-right: 8px;"></i>
-    Go to Process Earnings
-  </button>
+  <div class="top-bar">
+    <h1>Approve Deposits & Withdraws</h1>
+    <button onclick="window.location.href='process earnings.html'">
+      <i class="fas fa-coins"></i> Process Earnings
+    </button>
+  </div>
 
-  <div id="depositList">Loading...</div>
+  <div class="section-title">Pending Deposits</div>
+  <div id="depositList">Loading deposits...</div>
+
+  <div class="section-title">Pending Withdraws</div>
+  <div id="withdrawList">Loading withdraws...</div>
 
   <script>
-    // Firebase configuration
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
       authDomain: "echoplus-e9606.firebaseapp.com",
       projectId: "echoplus-e9606",
       storageBucket: "echoplus-e9606.appspot.com",
       messagingSenderId: "674979906304",
-      appId: "1:674979906304:web:7864593a26f571a268a9e5",
-      measurementId: "G-TYC9PSQFR2"
+      appId: "1:674979906304:web:7864593a26f571a268a9e5"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const depositList = document.getElementById('depositList');
+    const depositList = document.getElementById("depositList");
+    const withdrawList = document.getElementById("withdrawList");
 
-    // Fetch pending deposits
     async function fetchDeposits() {
       const snapshot = await db.collection("deposits").where("status", "==", "pending").get();
       depositList.innerHTML = "";
 
       if (snapshot.empty) {
-        depositList.innerHTML = "<p>No pending deposits found.</p>";
+        depositList.innerHTML = "<p class='no-items'>No pending deposits found.</p>";
         return;
       }
 
@@ -93,36 +139,95 @@
         const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
 
         const div = document.createElement("div");
-        div.className = "deposit";
+        div.className = "card deposit";
         div.innerHTML = `
-          <p><strong>Amount:</strong> UGX ${deposit.amount}</p>
+          <p><strong>Amount:</strong> UGX ${deposit.amount.toLocaleString()}</p>
           <p><strong>Method:</strong> ${deposit.method}</p>
           <p><strong>Phone:</strong> ${deposit.phone}</p>
           <p><strong>Sim Card Owner:</strong> ${deposit.simCardOwner}</p>
           <p><strong>User:</strong> ${user.name} (${user.phone})</p>
           <p><strong>Status:</strong> ${deposit.status}</p>
-          <button class="approve-btn" onclick="markAsPaid('${doc.id}')">Mark as Paid</button>
+          <button class="approve-btn" onclick="markDepositAsPaid('${doc.id}', ${deposit.amount}, '${deposit.userId}')">
+            Mark as Paid
+          </button>
         `;
         depositList.appendChild(div);
       }
     }
 
-    // Mark deposit as paid
-    async function markAsPaid(depositId) {
-      const confirmAction = confirm("Are you sure you want to mark this deposit as paid?");
+    async function fetchWithdraws() {
+      const snapshot = await db.collection("withdraws").where("status", "==", "pending").get();
+      withdrawList.innerHTML = "";
+
+      if (snapshot.empty) {
+        withdrawList.innerHTML = "<p class='no-items'>No pending withdraws found.</p>";
+        return;
+      }
+
+      for (const doc of snapshot.docs) {
+        const withdraw = doc.data();
+        const userSnap = await db.collection("users").doc(withdraw.userId).get();
+        const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
+
+        const div = document.createElement("div");
+        div.className = "card withdraw";
+        div.innerHTML = `
+          <p><strong>Amount:</strong> UGX ${withdraw.amount.toLocaleString()}</p>
+          <p><strong>To Phone:</strong> ${withdraw.phone}</p>
+          <p><strong>Holder:</strong> ${withdraw.holder}</p>
+          <p><strong>User:</strong> ${user.name} (${user.phone})</p>
+          <p><strong>Status:</strong> ${withdraw.status}</p>
+          <button class="approve-btn" onclick="markWithdrawAsPaid('${doc.id}')">
+            Mark as Paid
+          </button>
+        `;
+        withdrawList.appendChild(div);
+      }
+    }
+
+    async function markDepositAsPaid(depositId, amount, userId) {
+      const confirmAction = confirm("Mark this deposit as paid?");
       if (!confirmAction) return;
 
       try {
         await db.collection("deposits").doc(depositId).update({ status: "paid" });
+
+        const userRef = db.collection("users").doc(userId);
+        const userSnap = await userRef.get();
+        const userData = userSnap.exists ? userSnap.data() : {};
+
+        const newTotalDeposit = (userData.totalDeposit || 0) + amount;
+        const newUninvestedDeposit = (userData.uninvestedDeposit || 0) + amount;
+
+        await userRef.update({
+          totalDeposit: newTotalDeposit,
+          uninvestedDeposit: newUninvestedDeposit
+        });
+
         alert("Deposit marked as paid.");
-        fetchDeposits(); // Refresh list
+        fetchDeposits();
       } catch (error) {
-        console.error("Error updating status:", error);
-        alert("Failed to update deposit.");
+        console.error("Error approving deposit:", error);
+        alert("Failed to approve deposit.");
+      }
+    }
+
+    async function markWithdrawAsPaid(withdrawId) {
+      const confirmAction = confirm("Mark this withdraw as paid?");
+      if (!confirmAction) return;
+
+      try {
+        await db.collection("withdraws").doc(withdrawId).update({ status: "paid" });
+        alert("Withdraw marked as paid.");
+        fetchWithdraws();
+      } catch (error) {
+        console.error("Error approving withdraw:", error);
+        alert("Failed to approve withdraw.");
       }
     }
 
     fetchDeposits();
+    fetchWithdraws();
   </script>
 </body>
 </html>
