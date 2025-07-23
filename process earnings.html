@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Distribute Daily Earnings - Admin</title>
+  <title>Distribute Daily Product Earnings - Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -71,15 +71,56 @@
     .warning {
       color: #ffc107;
     }
+
+    table {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-collapse: collapse;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #0056cc;
+      color: white;
+    }
+
+    td {
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Distribute Daily Earnings</h1>
+  <h1>Distribute Daily Product Earnings</h1>
   <button class="btn" id="processBtn" onclick="distributeEarnings()">
-    <i class="fas fa-coins"></i> Distribute Earnings
+    <i class="fas fa-coins"></i> Distribute Product Earnings
   </button>
-  <div class="status" id="statusMessage">Ready to process earnings...</div>
+  <div class="status" id="statusMessage">Ready to process product earnings...</div>
+
+  <!-- Earnings Table -->
+  <h2 style="margin-top: 40px;">Recent Product Earnings</h2>
+  <table id="earningsTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Phone</th>
+        <th>Amount (UGX)</th>
+      </tr>
+    </thead>
+    <tbody id="earningsBody">
+      <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+    </tbody>
+  </table>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -87,7 +128,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
       authDomain: "echoplus-e9606.firebaseapp.com",
@@ -101,11 +141,8 @@
     const db = firebase.firestore();
     const processBtn = document.getElementById('processBtn');
     const statusEl = document.getElementById('statusMessage');
-
-    // System document reference for tracking last processing time
     const systemRef = db.collection('system').doc('earningsProcessing');
 
-    // Add log message with timestamp
     function log(message, type = '') {
       const timestamp = new Date().toLocaleTimeString();
       const logEntry = document.createElement('div');
@@ -114,211 +151,60 @@
       statusEl.scrollTop = statusEl.scrollHeight;
     }
 
-    // Main function to distribute earnings
     async function distributeEarnings() {
       processBtn.disabled = true;
-      log("Starting earnings distribution...");
-      
+      log("Starting product earnings distribution...");
+
       try {
-        // Check last processing time
         const systemDoc = await systemRef.get();
         const now = new Date();
-        
+
         if (systemDoc.exists) {
           const lastProcessed = systemDoc.data().lastProcessed.toDate();
           const hoursSinceLast = (now - lastProcessed) / (1000 * 60 * 60);
-          
+
           if (hoursSinceLast < 24) {
-            log(`⚠️ Earnings processed ${Math.floor(hoursSinceLast)} hours ago. Please wait ${Math.ceil(24 - hoursSinceLast)} more hours.`, "warning");
+            log(`⚠️ Earnings processed ${Math.floor(hoursSinceLast)} hours ago. Wait ${Math.ceil(24 - hoursSinceLast)} more hours.`, "warning");
             processBtn.disabled = false;
             return;
           }
         }
-        
+
         log("✅ Last processing check passed");
-        log("Fetching active products...");
-             // Get all active products
-        const productsSnapshot = await db.collection('products')
-          .where('status', '==', 'active')
-          .get();
-        
-        if (productsSnapshot.empty) {
-          log("ℹ️ No active products found");
-        } else {
-          log(`Found ${productsSnapshot.size} active products`);
-        }
-        
-        // Prepare for batch operations
-        const userEarnings = {};
-        const userUpdates = {};
-        const earningsBatch = db.batch();
-        const productsBatch = db.batch();
-        const usersBatch = db.batch();
-        
-        // 1. Process products and calculate earnings
-        productsSnapshot.forEach(doc => {
-          const data = doc.data();
-          const ref = doc.ref;
-          const userId = data.userId;
-          
-          if (data.remainingDays > 0) {
-            const earnToday = data.dailyIncome || 0;
-            
-            // Update product
-            productsBatch.update(ref, {
-              amountEarnedSoFar: (data.amountEarnedSoFar || 0) + earnToday,
-              remainingDays: data.remainingDays - 1,
-              lastEarningDate: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // Mark as expired if cycles completed
-            if (data.remainingDays === 1) {
-              productsBatch.update(ref, { status: 'expired' });
-              log(`➖ Product ${doc.id} expired for user ${userId}`);
-            }
-            
-            // Accumulate user earnings
-            if (!userEarnings[userId]) {
-              userEarnings[userId] = {
-                daily: 0,
-                welcome: false,
-                referral: false
-              };
-            }
-            userEarnings[userId].daily += earnToday;
-          }
-        });
-        
-        // Commit product updates
-        await productsBatch.commit();
-        log("✅ Product updates completed");
-        
-        // 2. Process users
-        log("Processing user earnings...");
-        const usersSnapshot = await db.collection('users').get();
-        
-        usersSnapshot.forEach(userDoc => {
-          const userRef = userDoc.ref;
+        let processedCount = 0;
+
+        const usersSnap = await db.collection('users').get();
+
+        for (const userDoc of usersSnap.docs) {
           const userData = userDoc.data();
           const userId = userDoc.id;
-          
-          // Initialize user earnings if needed
-          if (!userEarnings[userId]) {
-            userEarnings[userId] = {
-              daily: 0,
-              welcome: !userData.welcomeBonusGiven,
-              referral: false
-            };
-          }
-          
-          // Welcome bonus for new users (2000 UGX)
-          if (!userData.welcomeBonusGiven) {
-            userEarnings[userId].welcome = true;
-            log(`🎁 Added welcome bonus to user ${userId}`);
-          }
-          
-          // Referral bonus (25% of referee's deposit)
-          if (userData.referrer && !userData.referrerAwarded && userData.totalDeposit > 0) {
-            const referrerId = userData.referrer;
-            const referralBonus = userData.totalDeposit * 0.25;
-            
-            if (!userEarnings[referrerId]) {
-              userEarnings[referrerId] = {
-                daily: 0,
-                welcome: false,
-                referral: true,
-                referralAmount: referralBonus,
-                referralFrom: userId
-              };
-            } else {
-              userEarnings[referrerId].referral = true;
-              userEarnings[referrerId].referralAmount = referralBonus;
-              userEarnings[referrerId].referralFrom = userId;
-            }
-            
-            // Mark referral as awarded
-            usersBatch.update(userRef, { referrerAwarded: true });
-            log(`👥 Added referral bonus of UGX ${referralBonus} to ${referrerId} from ${userId}`);
-          }
-          
-          // Prepare user updates
-          const earnings = userEarnings[userId];
-          const updates = {};
-          
-          if (earnings.daily > 0) {
-            updates.totalEarnings = (userData.totalEarnings || 0) + earnings.daily;
-            updates.todaysEarnings = earnings.daily;
-          }
-          
-          if (earnings.welcome) {
-            updates.uninvestedDeposit = (userData.uninvestedDeposit || 0) + 2000;
-            updates.welcomeBonusGiven = true;
-          }
-          
-          if (earnings.referral) {
-            updates.uninvestedDeposit = (userData.uninvestedDeposit || 0) + earnings.referralAmount;
-          }
-          
-          // Count active investments
-          if (userData.activeInvestments === undefined) {
-            updates.activeInvestments = 0;
-          }
-          
-          if (Object.keys(updates).length > 0) {
-            usersBatch.update(userRef, updates);
-          }
-        });
-        
-        // Commit user updates
-        await usersBatch.commit();
-        log("✅ User updates completed");
-        
-        // 3. Create earnings records
-        log("Creating earnings records...");
-        const earningsCollection = db.collection('earnings');
-        const earningsTimestamp = firebase.firestore.FieldValue.serverTimestamp();
-        
-        for (const userId in userEarnings) {
-          const earnings = userEarnings[userId];
-          
-          if (earnings.daily > 0) {
-            earningsBatch.set(earningsCollection.doc(), {
+
+          if (userData.productEarnings && userData.productEarnings > 0) {
+            const earningAmount = userData.productEarnings;
+
+            // Add earning to earnings collection
+            await db.collection('earnings').add({
               userId: userId,
-              amount: earnings.daily,
-              type: 'daily',
-              date: earningsTimestamp
+              amount: earningAmount,
+              type: 'product',
+              date: firebase.firestore.FieldValue.serverTimestamp()
             });
-          }
-          
-          if (earnings.welcome) {
-            earningsBatch.set(earningsCollection.doc(), {
-              userId: userId,
-              amount: 2000,
-              type: 'welcome',
-              date: earningsTimestamp
+
+            // Reset product earnings to 0
+            await db.collection('users').doc(userId).update({
+              productEarnings: 0
             });
-          }
-          
-          if (earnings.referral) {
-            earningsBatch.set(earningsCollection.doc(), {
-              userId: userId,
-              amount: earnings.referralAmount,
-              type: 'referral',
-              date: earningsTimestamp,
-              referralFrom: earnings.referralFrom
-            });
+
+            log(`💰 UGX ${earningAmount} product earnings sent to ${userData.phone || 'user'}`);
+            processedCount++;
           }
         }
-        
-        await earningsBatch.commit();
-        log("✅ Earnings records created");
-        
-        // 4. Update last processing time
-        await systemRef.set({
-          lastProcessed: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        log("🎉 Earnings distribution completed successfully!", "success");
+
+        log(`🎉 Distribution done for ${processedCount} user(s).`, "success");
+
+        await systemRef.set({ lastProcessed: firebase.firestore.FieldValue.serverTimestamp() });
+
+        loadRecentEarnings();
       } catch (err) {
         console.error("Error:", err);
         log(`❌ ERROR: ${err.message}`, "error");
@@ -326,6 +212,76 @@
         processBtn.disabled = false;
       }
     }
+
+    async function loadRecentEarnings() {
+      const earningsBody = document.getElementById("earningsBody");
+      earningsBody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Loading...</td></tr>";
+
+      try {
+        const earningsSnap = await db.collection('earnings')
+          .where('type', '==', 'product')
+          .orderBy('date', 'desc')
+          .limit(20)
+          .get();
+
+        const usersSnap = await db.collection('users').get();
+        const userPhoneMap = {};
+        usersSnap.forEach(doc => {
+          const data = doc.data();
+          userPhoneMap[doc.id] = data.phone || 'N/A';
+        });
+
+        let rows = '';
+        earningsSnap.forEach(doc => {
+          const data = doc.data();
+          const phone = userPhoneMap[data.userId] || 'Unknown';
+          rows += `
+            <tr>
+              <td>${data.type}</td>
+              <td>${phone}</td>
+              <td>UGX ${data.amount}</td>
+            </tr>
+          `;
+        });
+
+        earningsBody.innerHTML = rows || "<tr><td colspan='3' style='text-align:center;'>No earnings found.</td></tr>";
+      } catch (error) {
+        console.error("Error loading earnings:", error);
+        earningsBody.innerHTML = "<tr><td colspan='3' style='text-align:center; color:red;'>Failed to load earnings.</td></tr>";
+      }
+    }
+
+    window.onload = () => {
+      loadRecentEarnings();
+    };
+  </script>
+
+  <!-- Admin Login Control -->
+  <script>
+    const allowedAdmins = [
+      "nuclearphillipsug@gmail.com",
+      "byamukamambabazimentor2@gmail.com"
+    ];
+
+    const auth = firebase.auth();
+    const loginTime = localStorage.getItem("adminLoginTime");
+
+    auth.onAuthStateChanged(user => {
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert("❌ Access denied. Admins only.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const now = Date.now();
+      if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
+        auth.signOut().then(() => {
+          localStorage.removeItem("adminLoginTime");
+          alert("⏰ Session expired. Please log in again.");
+          window.location.href = "login.html";
+        });
+      }
+    });
   </script>
 </body>
 </html>
