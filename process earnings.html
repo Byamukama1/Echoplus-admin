@@ -123,165 +123,162 @@
   </table>
 
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
-      authDomain: "echoplus-e9606.firebaseapp.com",
-      projectId: "echoplus-e9606",
-      storageBucket: "echoplus-e9606.appspot.com",
-      messagingSenderId: "674979906304",
-      appId: "1:674979906304:web:7864593a26f571a268a9e5"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
+    authDomain: "echoplus-e9606.firebaseapp.com",
+    projectId: "echoplus-e9606",
+    storageBucket: "echoplus-e9606.appspot.com",
+    messagingSenderId: "674979906304",
+    appId: "1:674979906304:web:7864593a26f571a268a9e5"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const processBtn = document.getElementById('processBtn');
-    const statusEl = document.getElementById('statusMessage');
-    const systemRef = db.collection('system').doc('earningsProcessing');
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+  const processBtn = document.getElementById('processBtn');
+  const statusEl = document.getElementById('statusMessage');
+  const earningsBody = document.getElementById('earningsBody');
+  const systemRef = db.collection('system').doc('earningsProcessing');
 
-    function log(message, type = '') {
-      const timestamp = new Date().toLocaleTimeString();
-      const logEntry = document.createElement('div');
-      logEntry.innerHTML = `<span class="${type}">[${timestamp}] ${message}</span>`;
-      statusEl.appendChild(logEntry);
-      statusEl.scrollTop = statusEl.scrollHeight;
-    }
+  const allowedAdmins = [
+    "nuclearphillipsug@gmail.com",
+    "byamukamambabazimentor2@gmail.com"
+  ];
 
-    async function distributeEarnings() {
-      processBtn.disabled = true;
-      log("Starting product earnings distribution...");
+  function log(message, type = '') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.innerHTML = `<span class="${type}">[${timestamp}] ${message}</span>`;
+    statusEl.appendChild(logEntry);
+    statusEl.scrollTop = statusEl.scrollHeight;
+  }
 
-      try {
-        const systemDoc = await systemRef.get();
-        const now = new Date();
+  async function distributeEarnings() {
+    processBtn.disabled = true;
+    log("🚀 Starting earnings distribution...");
 
-        if (systemDoc.exists) {
-          const lastProcessed = systemDoc.data().lastProcessed.toDate();
-          const hoursSinceLast = (now - lastProcessed) / (1000 * 60 * 60);
+    try {
+      const systemDoc = await systemRef.get();
+      const now = new Date();
 
-          if (hoursSinceLast < 24) {
-            log(`⚠️ Earnings processed ${Math.floor(hoursSinceLast)} hours ago. Wait ${Math.ceil(24 - hoursSinceLast)} more hours.`, "warning");
-            processBtn.disabled = false;
-            return;
-          }
+      if (systemDoc.exists) {
+        const lastProcessed = systemDoc.data().lastProcessed.toDate();
+        const hoursSinceLast = (now - lastProcessed) / (1000 * 60 * 60);
+
+        if (hoursSinceLast < 24) {
+          log(`⚠️ Last processed ${Math.floor(hoursSinceLast)} hours ago. Try again in ${Math.ceil(24 - hoursSinceLast)} hrs.`, "warning");
+          processBtn.disabled = false;
+          return;
         }
-
-        log("✅ Last processing check passed");
-        let processedCount = 0;
-
-        const usersSnap = await db.collection('users').get();
-
-        for (const userDoc of usersSnap.docs) {
-          const userData = userDoc.data();
-          const userId = userDoc.id;
-
-          if (userData.productEarnings && userData.productEarnings > 0) {
-            const earningAmount = userData.productEarnings;
-
-            // Add earning to earnings collection
-            await db.collection('earnings').add({
-              userId: userId,
-              amount: earningAmount,
-              type: 'product',
-              date: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Reset product earnings to 0
-            await db.collection('users').doc(userId).update({
-              productEarnings: 0
-            });
-
-            log(`💰 UGX ${earningAmount} product earnings sent to ${userData.phone || 'user'}`);
-            processedCount++;
-          }
-        }
-
-        log(`🎉 Distribution done for ${processedCount} user(s).`, "success");
-
-        await systemRef.set({ lastProcessed: firebase.firestore.FieldValue.serverTimestamp() });
-
-        loadRecentEarnings();
-      } catch (err) {
-        console.error("Error:", err);
-        log(`❌ ERROR: ${err.message}`, "error");
-      } finally {
-        processBtn.disabled = false;
       }
-    }
 
-    async function loadRecentEarnings() {
-      const earningsBody = document.getElementById("earningsBody");
-      earningsBody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Loading...</td></tr>";
+      const productsSnap = await db.collection('products').where('status', '==', 'active').get();
+      let processedCount = 0;
 
-      try {
-        const earningsSnap = await db.collection('earnings')
-          .where('type', '==', 'product')
-          .orderBy('date', 'desc')
-          .limit(20)
-          .get();
+      for (const doc of productsSnap.docs) {
+        const product = doc.data();
+        const productId = doc.id;
+        const { dailyIncome, userId, remainingDays } = product;
 
-        const usersSnap = await db.collection('users').get();
-        const userPhoneMap = {};
-        usersSnap.forEach(doc => {
-          const data = doc.data();
-          userPhoneMap[doc.id] = data.phone || 'N/A';
+        if (!dailyIncome || !userId || remainingDays <= 0) continue;
+
+        // Update product's earnings
+        await db.collection('products').doc(productId).update({
+          amountEarned: (product.amountEarned || 0) + dailyIncome,
+          remainingDays: remainingDays - 1,
+          status: remainingDays - 1 === 0 ? 'ended' : 'active'
         });
 
-        let rows = '';
-        earningsSnap.forEach(doc => {
-          const data = doc.data();
-          const phone = userPhoneMap[data.userId] || 'Unknown';
-          rows += `
-            <tr>
-              <td>${data.type}</td>
-              <td>${phone}</td>
-              <td>UGX ${data.amount}</td>
-            </tr>
-          `;
-        });
+        // Update user total earnings
+        const userRef = db.collection('users').doc(userId);
+        const userSnap = await userRef.get();
 
-        earningsBody.innerHTML = rows || "<tr><td colspan='3' style='text-align:center;'>No earnings found.</td></tr>";
-      } catch (error) {
-        console.error("Error loading earnings:", error);
-        earningsBody.innerHTML = "<tr><td colspan='3' style='text-align:center; color:red;'>Failed to load earnings.</td></tr>";
+        if (userSnap.exists) {
+          const user = userSnap.data();
+          const newTotal = (user.totalEarnings || 0) + dailyIncome;
+
+          await userRef.update({ totalEarnings: newTotal });
+
+          await db.collection('earnings').add({
+            userId: userId,
+            amount: dailyIncome,
+            type: "product",
+            source: "Daily Product Earning",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          log(`💰 UGX ${dailyIncome} added to ${user.phone || "unknown"}`);
+          processedCount++;
+        }
       }
-    }
 
-    window.onload = () => {
+      log(`🎉 Distribution complete for ${processedCount} product(s).`, "success");
+      await systemRef.set({ lastProcessed: firebase.firestore.FieldValue.serverTimestamp() });
       loadRecentEarnings();
-    };
-  </script>
+    } catch (err) {
+      console.error("❌ Error:", err);
+      log(`❌ ${err.message}`, "error");
+    } finally {
+      processBtn.disabled = false;
+    }
+  }
 
-  <!-- Admin Login Control -->
-  <script>
-    const allowedAdmins = [
-      "nuclearphillipsug@gmail.com",
-      "byamukamambabazimentor2@gmail.com"
-    ];
+  async function loadRecentEarnings() {
+    earningsBody.innerHTML = "<tr><td colspan='3'>Loading...</td></tr>";
+    try {
+      const earningsSnap = await db.collection('earnings')
+        .where('type', '==', 'product')
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
 
-    const auth = firebase.auth();
-    const loginTime = localStorage.getItem("adminLoginTime");
+      const usersSnap = await db.collection('users').get();
+      const userMap = {};
+      usersSnap.forEach(doc => {
+        const data = doc.data();
+        userMap[doc.id] = data.phone || 'Unknown';
+      });
 
+      let html = '';
+      earningsSnap.forEach(doc => {
+        const e = doc.data();
+        html += `
+          <tr>
+            <td>${e.type}</td>
+            <td>${userMap[e.userId] || 'Unknown'}</td>
+            <td>UGX ${e.amount}</td>
+          </tr>
+        `;
+      });
+
+      earningsBody.innerHTML = html || "<tr><td colspan='3'>No earnings found.</td></tr>";
+    } catch (error) {
+      console.error("❌ Error loading table:", error);
+      earningsBody.innerHTML = "<tr><td colspan='3'>Failed to load earnings.</td></tr>";
+    }
+  }
+
+  window.onload = () => {
+    // Admin login validation with session expiry
     auth.onAuthStateChanged(user => {
-      if (!user || !allowedAdmins.includes(user.email)) {
-        alert("❌ Access denied. Admins only.");
-        window.location.href = "login.html";
-        return;
-      }
-
+      const loginTime = localStorage.getItem("adminLoginTime");
       const now = Date.now();
-      if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
+
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert("❌ Admin access only.");
+        window.location.href = "login.html";
+      } else if (!loginTime || (now - parseInt(loginTime)) > 3600000) {
         auth.signOut().then(() => {
           localStorage.removeItem("adminLoginTime");
           alert("⏰ Session expired. Please log in again.");
           window.location.href = "login.html";
         });
+      } else {
+        loadRecentEarnings();
       }
     });
-  </script>
+  };
+</script>
 </body>
 </html>
