@@ -242,6 +242,33 @@
       color: var(--gray);
       font-size: 14px;
     }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .notification.success {
+      background: var(--success);
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      background: var(--danger);
+      opacity: 1;
+      transform: translateX(0);
+    }
 
     @media (max-width: 768px) {
       .top-bar {
@@ -264,6 +291,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="top-bar">
@@ -285,9 +313,11 @@
     <div class="admin-info">
       <p>Echoplus Admin Dashboard v1.0 &copy; 2023</p>
     </div>
+    
+    <div id="notification" class="notification"></div>
   </div>
 
- <script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
     authDomain: "echoplus-e9606.firebaseapp.com",
@@ -299,10 +329,18 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const auth = firebase.auth();
 
   const depositList = document.getElementById("depositList");
   const withdrawList = document.getElementById("withdrawList");
+  const notification = document.getElementById("notification");
+
+  function showNotification(message, isSuccess = true) {
+    notification.textContent = message;
+    notification.className = isSuccess ? "notification success" : "notification error";
+    setTimeout(() => {
+      notification.className = "notification";
+    }, 4000);
+  }
 
   async function fetchDeposits() {
     const snapshot = await db.collection("deposits").where("status", "==", "pending").get();
@@ -346,23 +384,19 @@
       const depositRef = db.collection("deposits").doc(depositId);
       const userRef = db.collection("users").doc(userId);
       const userSnap = await userRef.get();
-
       if (!userSnap.exists) throw new Error("User not found");
-      const userData = userSnap.data();
 
-      // Update deposit status
+      const userData = userSnap.data();
       await depositRef.update({ status: "paid" });
 
-      // Update user deposit balances
-      const newTotal = (userData.totalDeposit || 0) + amount;
-      const newUninvested = (userData.uninvestedDeposit || 0) + amount;
+      const totalDeposit = (userData.totalDeposit || 0) + amount;
+      const uninvested = (userData.uninvestedDeposit || 0) + amount;
 
       await userRef.update({
-        totalDeposit: newTotal,
-        uninvestedDeposit: newUninvested
+        totalDeposit,
+        uninvestedDeposit: uninvested
       });
 
-      // Award referral bonus if referrer exists
       const refPhone = userData.referrerPhone;
       if (refPhone) {
         const refSnap = await db.collection("users").where("phone", "==", refPhone).limit(1).get();
@@ -370,36 +404,34 @@
           const refDoc = refSnap.docs[0];
           const refId = refDoc.id;
           const refData = refDoc.data();
+          const awardedUsers = refData.referralAwardedUsers || [];
 
-          const alreadyAwarded = (refData.referralAwardedUsers || []).includes(userId);
-
-          if (!alreadyAwarded) {
+          if (!awardedUsers.includes(userId)) {
             const bonus = amount * 0.25;
-
-            // Record the referral bonus
             await db.collection("earnings").add({
               userId: refId,
               amount: bonus,
               type: "referral",
-              date: firebase.firestore.FieldValue.serverTimestamp()
+              source: "Deposit Bonus",
+              refereeId: userId,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // Update referrer's earnings and mark as awarded
             await db.collection("users").doc(refId).update({
               totalEarnings: (refData.totalEarnings || 0) + bonus,
               referralAwardedUsers: firebase.firestore.FieldValue.arrayUnion(userId)
             });
 
-            alert(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
+            showNotification(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
           }
         }
       }
 
-      alert("✅ Deposit marked as paid.");
+      showNotification("✅ Deposit marked as paid.");
       fetchDeposits();
     } catch (error) {
-      console.error("❌ Error approving deposit:", error);
-      alert("❌ Failed to approve deposit.");
+      console.error("❌ Error:", error);
+      showNotification("❌ Failed to approve deposit.", false);
     }
   }
 
@@ -441,43 +473,73 @@
     if (!confirm("Mark this withdraw as paid?")) return;
 
     try {
-      await db.collection("withdraws").doc(id).update({ status: "paid" });
-      alert("✅ Withdraw marked as paid.");
+      const withdrawRef = db.collection("withdraws").doc(id);
+      const withdrawSnap = await withdrawRef.get();
+      if (!withdrawSnap.exists) throw new Error("Withdraw not found");
+
+      const data = withdrawSnap.data();
+      const amount = data.amount;
+      const userId = data.userId;
+
+      await withdrawRef.update({ status: "paid" });
+
+      const userRef = db.collection("users").doc(userId);
+      const userSnap = await userRef.get();
+      if (userSnap.exists) {
+        const userData = userSnap.data();
+        const totalWithdraw = (userData.totalWithdraw || 0) + amount;
+        await userRef.update({ totalWithdraw });
+      }
+
+      showNotification("✅ Withdraw marked as paid.");
       fetchWithdraws();
     } catch (error) {
       console.error("❌ Error approving withdraw:", error);
-      alert("❌ Failed to approve withdraw.");
+      showNotification("❌ Failed to approve withdraw.", false);
     }
   }
 
   async function rejectDeposit(id) {
     if (!confirm("Reject this deposit?")) return;
-
     try {
       await db.collection("deposits").doc(id).update({ status: "rejected" });
-      alert("🚫 Deposit has been rejected.");
+      showNotification("🚫 Deposit rejected.");
       fetchDeposits();
     } catch (error) {
-      console.error("❌ Error rejecting deposit:", error);
-      alert("❌ Failed to reject deposit.");
+      console.error("❌", error);
+      showNotification("❌ Failed to reject deposit.", false);
     }
   }
 
   async function rejectWithdraw(id) {
     if (!confirm("Reject this withdraw?")) return;
-
     try {
       await db.collection("withdraws").doc(id).update({ status: "rejected" });
-      alert("🚫 Withdraw has been rejected.");
+      showNotification("🚫 Withdraw rejected.");
       fetchWithdraws();
     } catch (error) {
-      console.error("❌ Error rejecting withdraw:", error);
-      alert("❌ Failed to reject withdraw.");
+      console.error("❌", error);
+      showNotification("❌ Failed to reject withdraw.", false);
     }
   }
 
   fetchDeposits();
   fetchWithdraws();
+  
+  </script>
+  <!-- 🔐 Admin Login Verification -->
+<script>
+  const allowedAdmins = [
+    "nuclearphillipsug@gmail.com",
+    "byamukamambabazimentor2@gmail.com"
+  ];
+
+  firebase.auth().onAuthStateChanged((user) => {
+    if (!user || !allowedAdmins.includes(user.email)) {
+      alert("Access denied. Please log in with an authorized admin account.");
+      window.location.href = "login.html";
+    }
+  });
 </script>
 </body>
 </html>
