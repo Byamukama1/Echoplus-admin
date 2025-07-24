@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard - Echoplus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f4f6;
+      margin: 20px;
+      color: #1f2937;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .user-card {
+      background: white;
+      border-left: 6px solid #3f37c9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    }
+
+    .user-card p {
+      margin: 6px 0;
+    }
+
+    .btn-delete {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-delete:hover {
+      background-color: #dc2626;
+    }
+
+    #userList {
+      margin-top: 40px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      margin-top: 40px;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+      color: #111827;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>👥 Admin Dashboard - Echoplus</h1>
+  <div class="section-title">All Users</div>
+  <div id="userList">Loading users...</div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
+      authDomain: "echoplus-e9606.firebaseapp.com",
+      projectId: "echoplus-e9606",
+      storageBucket: "echoplus-e9606.appspot.com",
+      messagingSenderId: "674979906304",
+      appId: "1:674979906304:web:7864593a26f571a268a9e5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const allowedAdmins = [
+      "nuclearphillipsug@gmail.com",
+      "byamukamambabazimentor2@gmail.com"
+    ];
+
+    auth.onAuthStateChanged(user => {
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert("Access denied. Please log in with an authorized admin account.");
+        window.location.href = "login.html";
+      } else {
+        fetchUsers();
+      }
+    });
+
+    const userList = document.getElementById("userList");
+
+    async function fetchUsers() {
+      const snapshot = await db.collection("users").orderBy("timestamp", "desc").get();
+      userList.innerHTML = "";
+
+      if (snapshot.empty) {
+        userList.innerHTML = `<p>No users found.</p>`;
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const div = document.createElement("div");
+        div.className = "user-card";
+        div.innerHTML = `
+          <p><strong>Name:</strong> ${user.name || "N/A"}</p>
+          <p><strong>Email:</strong> ${user.email || "N/A"}</p>
+          <p><strong>Phone:</strong> ${user.phone || "N/A"}</p>
+          <p><strong>Total Earnings:</strong> UGX ${user.totalEarnings?.toLocaleString() || 0}</p>
+          <p><strong>Total Deposit:</strong> UGX ${user.totalDeposit?.toLocaleString() || 0}</p>
+          <p><strong>Uninvested:</strong> UGX ${user.uninvestedDeposit?.toLocaleString() || 0}</p>
+          <button class="btn-delete" onclick="deleteUser('${doc.id}')">Delete User</button>
+        `;
+        userList.appendChild(div);
+      });
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm("Are you sure you want to permanently delete this user?")) return;
+      try {
+        await db.collection("users").doc(userId).delete();
+        alert("User deleted.");
+        fetchUsers();
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to delete user.");
+      }
+    }
+  </script>
+</body>
+</html>
