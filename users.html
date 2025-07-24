@@ -20,23 +20,214 @@
     h1 {
       font-size: 24px;
       margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 20px 12px 45px;
+      border-radius: 30px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 18px;
+      top: 13px;
+      color: #777;
+    }
+
+    .search-filters {
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-btn.active {
+      background: #3f37c9;
+      color: white;
+      border-color: #3f37c9;
     }
 
     .user-card {
       background: white;
       border-left: 6px solid #3f37c9;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
     }
 
     .user-card p {
-      margin: 6px 0;
+      margin: 8px 0;
+      display: flex;
+    }
+
+    .user-card strong {
+      width: 150px;
+      display: inline-block;
+    }
+
+    .user-card .editable-field {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+
+    .user-card .editable-field:focus {
+      border-color: #3f37c9;
+      background: #f8f9ff;
+      outline: none;
+    }
+
+    .user-card .btn-container {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .btn-save {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s;
+    }
+
+    .btn-save:hover {
+      background-color: #059669;
     }
 
     .btn-delete {
       background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s;
+    }
+
+    .btn-delete:hover {
+      background-color: #dc2626;
+    }
+
+    #userList {
+      margin-top: 30px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      margin-top: 40px;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 12px;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .products-section {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .products-section h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #3f37c9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .product-card {
+      background: #f8f9ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid #10b981;
+    }
+
+    .product-card p {
+      margin: 6px 0;
+      display: flex;
+    }
+
+    .product-card strong {
+      width: 150px;
+      display: inline-block;
+    }
+
+    .product-card .editable-field {
+      flex: 1;
+      padding: 5px 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+
+    .product-card .editable-field:focus {
+      border-color: #10b981;
+      background: #f0fdf4;
+      outline: none;
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-save-product {
+      background-color: #3b82f6;
       color: white;
       border: none;
       padding: 8px 16px;
@@ -45,30 +236,107 @@
       font-weight: bold;
     }
 
-    .btn-delete:hover {
-      background-color: #dc2626;
+    .btn-save-product:hover {
+      background-color: #2563eb;
     }
 
-    #userList {
-      margin-top: 40px;
+    .btn-delete-product {
+      background-color: #f97316;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    .section-title {
-      font-size: 20px;
-      margin-top: 40px;
-      border-bottom: 2px solid #e5e7eb;
-      padding-bottom: 10px;
-      color: #111827;
+    .btn-delete-product:hover {
+      background-color: #ea580c;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+      font-size: 18px;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      flex: 1;
+      min-width: 200px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .stat-card h3 {
+      color: #6b7280;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #3f37c9;
     }
   </style>
 </head>
 
 <body>
-  <h1>👥 Admin Dashboard - Echoplus</h1>
+  <h1>
+    <span>👥 Admin Dashboard - Echoplus</span>
+    <span id="currentDate"></span>
+  </h1>
+  
+  <div class="stats-bar">
+    <div class="stat-card">
+      <h3>Total Users</h3>
+      <div class="value" id="totalUsers">0</div>
+    </div>
+    <div class="stat-card">
+      <h3>Active Products</h3>
+      <div class="value" id="totalProducts">0</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Earnings</h3>
+      <div class="value">UGX <span id="totalEarnings">0</span></div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Deposits</h3>
+      <div class="value">UGX <span id="totalDeposits">0</span></div>
+    </div>
+  </div>
+  
+  <div class="search-container">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search users by name or phone..." />
+    </div>
+    
+        
+        
+      </div>
+    </div>
+  </div>
+  
   <div class="section-title">All Users</div>
   <div id="userList">Loading users...</div>
 
   <script>
+    // Set current date
+    const now = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+    
     const firebaseConfig = {
       apiKey: "AIzaSyChCWhXOdNDl-8mc367bPmRBnNnVJsQVVU",
       authDomain: "echoplus-e9606.firebaseapp.com",
@@ -96,43 +364,228 @@
       }
     });
 
-    const userList = document.getElementById("userList");
+    const userList = document.getElementById('userList');
+    const searchInput = document.getElementById('searchInput');
+    let allUsers = [];
+    let allProducts = [];
 
-    async function fetchUsers() {
-      const snapshot = await db.collection("users").orderBy("timestamp", "desc").get();
-      userList.innerHTML = "";
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      filterUsers(searchTerm);
+    });
 
-      if (snapshot.empty) {
-        userList.innerHTML = `<p>No users found.</p>`;
+    function filterUsers(searchTerm) {
+      if (!searchTerm) {
+        renderUserList(allUsers);
         return;
       }
+      
+      const filteredUsers = allUsers.filter(user => {
+        const nameMatch = user.name?.toLowerCase().includes(searchTerm) || false;
+        const phoneMatch = user.phone?.toLowerCase().includes(searchTerm) || false;
+        return nameMatch || phoneMatch;
+      });
+      
+      renderUserList(filteredUsers);
+    }
 
-      snapshot.forEach(doc => {
-        const user = doc.data();
+    async function fetchUsers() {
+      try {
+        const usersSnapshot = await db.collection("users").orderBy("timestamp", "desc").get();
+        const productsSnapshot = await db.collection("products").get();
+        
+        allUsers = [];
+        allProducts = [];
+        
+        // Calculate stats
+        let totalEarnings = 0;
+        let totalDeposits = 0;
+        
+        usersSnapshot.forEach(doc => {
+          const user = { id: doc.id, ...doc.data() };
+          allUsers.push(user);
+          
+          // Calculate totals for stats
+          totalEarnings += user.totalEarnings || 0;
+          totalDeposits += user.totalDeposit || 0;
+        });
+        
+        productsSnapshot.forEach(doc => {
+          allProducts.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Update stats
+        document.getElementById('totalUsers').textContent = allUsers.length;
+        document.getElementById('totalProducts').textContent = allProducts.length;
+        document.getElementById('totalEarnings').textContent = totalEarnings.toLocaleString();
+        document.getElementById('totalDeposits').textContent = totalDeposits.toLocaleString();
+        
+        renderUserList(allUsers);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        userList.innerHTML = `<div class="no-results">Error loading data. Please try again.</div>`;
+      }
+    }
+
+    function renderUserList(users) {
+      if (users.length === 0) {
+        userList.innerHTML = `<div class="no-results">No users found matching your search.</div>`;
+        return;
+      }
+      
+      userList.innerHTML = '';
+      
+      users.forEach(user => {
+        // Find products for this user
+        const userProducts = allProducts.filter(product => product.userId === user.uid);
+        
         const div = document.createElement("div");
         div.className = "user-card";
         div.innerHTML = `
-          <p><strong>Name:</strong> ${user.name || "N/A"}</p>
-          <p><strong>Email:</strong> ${user.email || "N/A"}</p>
-          <p><strong>Phone:</strong> ${user.phone || "N/A"}</p>
-          <p><strong>Total Earnings:</strong> UGX ${user.totalEarnings?.toLocaleString() || 0}</p>
-          <p><strong>Total Deposit:</strong> UGX ${user.totalDeposit?.toLocaleString() || 0}</p>
-          <p><strong>Uninvested:</strong> UGX ${user.uninvestedDeposit?.toLocaleString() || 0}</p>
-          <button class="btn-delete" onclick="deleteUser('${doc.id}')">Delete User</button>
+          <p><strong>Name:</strong> <span class="editable-field" contenteditable="true" data-field="name">${user.name || "N/A"}</span></p>
+          <p><strong>Email:</strong> <span class="editable-field" contenteditable="true" data-field="email">${user.email || "N/A"}</span></p>
+          <p><strong>Phone:</strong> <span class="editable-field" contenteditable="true" data-field="phone">${user.phone || "N/A"}</span></p>
+          <p><strong>Referrer Phone:</strong> <span class="editable-field" contenteditable="true" data-field="referrerPhone">${user.referrerPhone || "N/A"}</span></p>
+          <p><strong>Total Earnings:</strong> <span class="editable-field" contenteditable="true" data-field="totalEarnings">${user.totalEarnings || 0}</span></p>
+          <p><strong>Total Deposit:</strong> <span class="editable-field" contenteditable="true" data-field="totalDeposit">${user.totalDeposit || 0}</span></p>
+          <p><strong>Uninvested:</strong> <span class="editable-field" contenteditable="true" data-field="uninvestedDeposit">${user.uninvestedDeposit || 0}</span></p>
+          
+          <div class="products-section">
+            <h3><i class="fas fa-box"></i> Products (${userProducts.length})</h3>
+            <div class="products-container">
+              ${userProducts.length > 0 ? 
+                userProducts.map(product => renderProductCard(product)).join('') : 
+                '<p>No products purchased</p>'}
+            </div>
+          </div>
+          
+          <div class="btn-container">
+            <button class="btn-save" onclick="saveUser('${user.id}')">
+              <i class="fas fa-save"></i> Save User
+            </button>
+            <button class="btn-delete" onclick="deleteUser('${user.id}')">
+              <i class="fas fa-trash"></i> Delete User
+            </button>
+          </div>
         `;
         userList.appendChild(div);
       });
     }
 
-    async function deleteUser(userId) {
-      if (!confirm("Are you sure you want to permanently delete this user?")) return;
+    function renderProductCard(product) {
+      return `
+        <div class="product-card">
+          <p><strong>Product Type:</strong> <span class="editable-field" contenteditable="true" data-field="productType">${product.productType || "N/A"}</span></p>
+          <p><strong>Price:</strong> <span class="editable-field" contenteditable="true" data-field="productPrice">${product.productPrice || 0}</span></p>
+          <p><strong>Daily Income:</strong> <span class="editable-field" contenteditable="true" data-field="dailyIncome">${product.dailyIncome || 0}</span></p>
+          <p><strong>Total Revenue:</strong> <span class="editable-field" contenteditable="true" data-field="totalRevenue">${product.totalRevenue || 0}</span></p>
+          <p><strong>Status:</strong> <span class="editable-field" contenteditable="true" data-field="status">${product.status || "N/A"}</span></p>
+          <div class="product-actions">
+            <button class="btn-save-product" onclick="saveProduct('${product.id}')">
+              <i class="fas fa-save"></i> Save Product
+            </button>
+            <button class="btn-delete-product" onclick="deleteProduct('${product.id}')">
+              <i class="fas fa-trash"></i> Delete Product
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function saveUser(userId) {
+      const userCard = document.querySelector(`.user-card:has(button[onclick="saveUser('${userId}')"])`);
+      if (!userCard) return;
+      
+      const userData = {};
+      const fields = userCard.querySelectorAll('.editable-field[data-field]');
+      
+      fields.forEach(field => {
+        const fieldName = field.getAttribute('data-field');
+        userData[fieldName] = field.textContent;
+        
+        // Convert number fields
+        const numberFields = ['totalEarnings', 'totalDeposit', 'uninvestedDeposit'];
+        if (numberFields.includes(fieldName)) {
+          userData[fieldName] = parseFloat(userData[fieldName]) || 0;
+        }
+      });
+      
       try {
+        await db.collection("users").doc(userId).update(userData);
+        alert("User data saved successfully!");
+        fetchUsers(); // Refresh data
+      } catch (error) {
+        console.error("Error saving user:", error);
+        alert("Failed to save user data: " + error.message);
+      }
+    }
+
+    async function saveProduct(productId) {
+      const productCard = document.querySelector(`.product-card:has(button[onclick="saveProduct('${productId}')"])`);
+      if (!productCard) return;
+      
+      const productData = {};
+      const fields = productCard.querySelectorAll('.editable-field[data-field]');
+      
+      fields.forEach(field => {
+        const fieldName = field.getAttribute('data-field');
+        let value = field.textContent;
+        
+        // Convert number fields
+        const numberFields = ['productPrice', 'dailyIncome', 'totalRevenue', 'amountEarnedSoFar', 'remainingDays', 'totalCycle'];
+        if (numberFields.includes(fieldName)) {
+          value = parseFloat(value) || 0;
+        }
+        
+        productData[fieldName] = value;
+      });
+      
+      try {
+        await db.collection("products").doc(productId).update(productData);
+        alert("Product data saved successfully!");
+        fetchUsers(); // Refresh data
+      } catch (error) {
+        console.error("Error saving product:", error);
+        alert("Failed to save product data: " + error.message);
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm("Are you sure you want to permanently delete this user and all their data?")) return;
+      
+      try {
+        // First delete all products for this user
+        const user = allUsers.find(u => u.id === userId);
+        if (user) {
+          const userProducts = allProducts.filter(p => p.userId === user.uid);
+          const deletePromises = userProducts.map(product => 
+            db.collection("products").doc(product.id).delete()
+          );
+          
+          await Promise.all(deletePromises);
+        }
+        
+        // Then delete the user
         await db.collection("users").doc(userId).delete();
-        alert("User deleted.");
+        alert("User and all associated products deleted successfully!");
         fetchUsers();
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("Failed to delete user.");
+        alert("Failed to delete user: " + error.message);
+      }
+    }
+
+    async function deleteProduct(productId) {
+      if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+      
+      try {
+        await db.collection("products").doc(productId).delete();
+        alert("Product deleted successfully!");
+        fetchUsers();
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete product: " + error.message);
       }
     }
   </script>
