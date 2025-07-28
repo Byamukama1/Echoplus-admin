@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Admin Dashboard - Echoplus</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --primary: #3f37c9;
@@ -39,8 +37,9 @@
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--light-gray);
       color: var(--dark);
-      padding: 20px;
-      line-height: 1.6;
+      padding: 15px;
+      line-height: 1.5;
+      font-size: 14px;
     }
 
     .container {
@@ -52,46 +51,46 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
       border-bottom: 1px solid var(--border);
     }
 
     h1 {
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 700;
       color: var(--dark);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     h1 i {
       background: var(--primary);
       color: white;
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 16px;
     }
 
     .top-bar button {
       background: var(--primary);
       color: #fff;
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 15px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
       cursor: pointer;
       box-shadow: var(--card-shadow);
       transition: all 0.3s ease;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .top-bar button:hover {
@@ -102,50 +101,52 @@
 
     .card {
       background: #fff;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 12px;
+      border-radius: 8px;
       box-shadow: var(--card-shadow);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
 
-    .deposit { border-left: 6px solid var(--primary); }
-    .withdraw { border-left: 6px solid var(--secondary); }
+    .deposit { border-left: 4px solid var(--primary); }
+    .withdraw { border-left: 4px solid var(--secondary); }
+    .summary-card { border-left: 4px solid var(--success); }
 
     .card p {
-      margin: 8px 0;
-      font-size: 15px;
+      margin: 6px 0;
+      font-size: 13px;
       display: flex;
     }
 
     .card p strong {
-      min-width: 140px;
+      min-width: 120px;
       color: var(--gray);
       font-weight: 500;
     }
 
     .action-buttons {
       display: flex;
-      gap: 12px;
-      margin-top: 16px;
+      gap: 8px;
+      margin-top: 12px;
     }
 
     .btn {
-      padding: 10px 20px;
+      padding: 8px 12px;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 5px;
+      font-size: 12px;
     }
 
     .btn:hover {
@@ -173,11 +174,11 @@
     }
 
     .section-title {
-      margin-top: 40px;
-      margin-bottom: 20px;
-      font-size: 22px;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      font-size: 18px;
       color: var(--dark);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
       border-bottom: 2px solid var(--border);
       position: relative;
       font-weight: 600;
@@ -188,33 +189,33 @@
       position: absolute;
       bottom: -2px;
       left: 0;
-      width: 120px;
-      height: 3px;
+      width: 100px;
+      height: 2px;
       background: var(--primary);
     }
 
     .no-items {
       text-align: center;
-      font-size: 16px;
+      font-size: 14px;
       color: var(--gray);
-      margin-top: 30px;
-      padding: 30px;
+      margin-top: 20px;
+      padding: 20px;
       background: white;
-      border-radius: 10px;
+      border-radius: 8px;
       box-shadow: var(--card-shadow);
     }
 
     .no-items i {
-      font-size: 48px;
-      margin-bottom: 15px;
+      font-size: 36px;
+      margin-bottom: 10px;
       color: #d1d5db;
     }
 
     .status-badge {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 13px;
+      padding: 3px 8px;
+      border-radius: 15px;
+      font-size: 12px;
       font-weight: 600;
     }
 
@@ -236,19 +237,19 @@
     .admin-info {
       display: flex;
       justify-content: flex-end;
-      margin-top: 30px;
-      padding-top: 20px;
+      margin-top: 20px;
+      padding-top: 15px;
       border-top: 1px solid var(--border);
       color: var(--gray);
-      font-size: 14px;
+      font-size: 12px;
     }
-    
+
     .notification {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 25px;
-      border-radius: 8px;
+      top: 15px;
+      right: 15px;
+      padding: 12px 20px;
+      border-radius: 6px;
       color: white;
       font-weight: 600;
       z-index: 1000;
@@ -256,296 +257,393 @@
       transform: translateX(100%);
       transition: all 0.3s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      font-size: 13px;
     }
-    
+
     .notification.success {
       background: var(--success);
       opacity: 1;
       transform: translateX(0);
     }
-    
+
     .notification.error {
       background: var(--danger);
       opacity: 1;
       transform: translateX(0);
     }
 
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .summary-card {
+      text-align: center;
+      padding: 12px;
+    }
+
+    .summary-card h3 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--gray);
+    }
+
+    .summary-card .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .summary-card .profit {
+      color: var(--success);
+    }
+
+    .fee-highlight {
+      color: var(--danger);
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
     @media (max-width: 768px) {
       .top-bar {
         flex-direction: column;
         align-items: flex-start;
-        gap: 20px;
+        gap: 15px;
       }
-      
+
       .action-buttons {
         flex-direction: column;
       }
-      
+
       .card p {
         flex-direction: column;
       }
-      
+
       .card p strong {
-        margin-bottom: 4px;
+        margin-bottom: 3px;
+      }
+      
+      .summary-cards {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 
+
 <body>
   <div class="container">
     <div class="top-bar">
-      <h1>
-        
-        Approve Deposits & Withdraws
-      </h1>
-         <div style="display: flex; gap: 10px;">
-  <button onclick="window.location.href='process earnings.html'">
-    <i class="fas fa-coins"></i> Process Earnings
-  </button>
-  <button style="padding: 8px 16px; font-size: 13px; background: #4b5563;" onclick="window.location.href='users.html'">
-    <i class="fas fa-users"></i> Users
-  </button>
-</div>
-
+      <h1> Approve Deposits & Withdraws</h1>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="window.location.href='process earnings.html'">
+          <i class="fas fa-coins"></i> Process Earnings
+        </button>
+        <button style="padding: 6px 12px; font-size: 12px; background: #4b5563;" onclick="window.location.href='users.html'">
+          <i class="fas fa-users"></i> Users
+        </button>
+      </div>
+    </div>
+    
+    <!-- Financial Summary Section -->
+    <div class="summary-cards">
+      <div class="card summary-card">
+        <h3>Total Deposits</h3>
+        <div class="value" id="totalDeposits">UGX 0</div>
+      </div>
+      <div class="card summary-card">
+        <h3>Total Withdraws</h3>
+        <div class="value" id="totalWithdraws">UGX 0</div>
+      </div>
+      <div class="card summary-card">
+        <h3>Company Profit</h3>
+        <div class="value profit" id="companyProfit">UGX 0</div>
+      </div>
+    </div>
 
     <div class="section-title">Pending Deposits</div>
     <div id="depositList">Loading deposits...</div>
 
     <div class="section-title">Pending Withdraws</div>
     <div id="withdrawList">Loading withdraws...</div>
-    
+
     <div class="admin-info">
       <p>Echoplus Admin Dashboard v1.0 &copy; 2023</p>
     </div>
-    
+
     <div id="notification" class="notification"></div>
   </div>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyARiyKbb2SrBkVugGpU-U6orCda2es3y_E",
-    authDomain: "echoplus-22e4f.firebaseapp.com",
-    projectId: "echoplus-22e4f",
-    storageBucket: "echoplus-22e4f.firebasestorage.app",
-    messagingSenderId: "969150908833",
-    appId: "1:969150908833:web:c2a5a1286f200cc23623e0",
-    measurementId: "G-HKB8B2RRX2"
-};
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyARiyKbb2SrBkVugGpU-U6orCda2es3y_E",
+      authDomain: "echoplus-22e4f.firebaseapp.com",
+      projectId: "echoplus-22e4f",
+      storageBucket: "echoplus-22e4f.appspot.com",
+      messagingSenderId: "969150908833",
+      appId: "1:969150908833:web:c2a5a1286f200cc23623e0",
+      measurementId: "G-HKB8B2RRX2"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  const depositList = document.getElementById("depositList");
-  const withdrawList = document.getElementById("withdrawList");
-  const notification = document.getElementById("notification");
+    const depositList = document.getElementById("depositList");
+    const withdrawList = document.getElementById("withdrawList");
+    const notification = document.getElementById("notification");
+    const totalDepositsEl = document.getElementById("totalDeposits");
+    const totalWithdrawsEl = document.getElementById("totalWithdraws");
+    const companyProfitEl = document.getElementById("companyProfit");
 
-  function showNotification(message, isSuccess = true) {
-    notification.textContent = message;
-    notification.className = isSuccess ? "notification success" : "notification error";
-    setTimeout(() => {
-      notification.className = "notification";
-    }, 4000);
-  }
+    // Financial totals
+    let totalDeposits = 0;
+    let totalWithdraws = 0;
+    let companyProfit = 0;
 
-  async function fetchDeposits() {
-    const snapshot = await db.collection("deposits").where("status", "==", "pending").get();
-    depositList.innerHTML = "";
-
-    if (snapshot.empty) {
-      depositList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending deposits found</p></div>`;
-      return;
+    function showNotification(message, isSuccess = true) {
+      notification.textContent = message;
+      notification.className = isSuccess ? "notification success" : "notification error";
+      setTimeout(() => {
+        notification.className = "notification";
+      }, 3000);
     }
 
-    for (const doc of snapshot.docs) {
-      const deposit = doc.data();
-      const userSnap = await db.collection("users").doc(deposit.userId).get();
-      const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
+    // Fetch financial totals
+    async function fetchFinancialTotals() {
+      try {
+        // Fetch total deposits
+        const depositsSnapshot = await db.collection("deposits").where("status", "==", "paid").get();
+        totalDeposits = 0;
+        depositsSnapshot.forEach(doc => {
+          totalDeposits += doc.data().amount;
+        });
+        totalDepositsEl.textContent = `UGX ${totalDeposits.toLocaleString()}`;
 
-      const div = document.createElement("div");
-      div.className = "card deposit";
-      div.innerHTML = `
-        <p><strong>Amount:</strong> UGX ${deposit.amount.toLocaleString()}</p>
-        <p><strong>Method:</strong> ${deposit.method}</p>
-        <p><strong>Phone:</strong> ${deposit.phone}</p>
-        <p><strong>Sim Card Owner:</strong> ${deposit.simCardOwner}</p>
-        <p><strong>User:</strong> ${user.name} (${user.phone})</p>
-        <p><strong>Status:</strong> <span class="status-badge status-pending">${deposit.status}</span></p>
-        <div class="action-buttons">
-          <button class="btn approve-btn" onclick="markDepositAsPaid('${doc.id}', ${deposit.amount}, '${deposit.userId}')">
-            <i class="fas fa-check"></i> Approve
-          </button>
-          <button class="btn reject-btn" onclick="rejectDeposit('${doc.id}')">
-            <i class="fas fa-times"></i> Reject
-          </button>
-        </div>`;
-      depositList.appendChild(div);
+        // Fetch total withdraws
+        const withdrawsSnapshot = await db.collection("withdraws").where("status", "==", "paid").get();
+        totalWithdraws = 0;
+        withdrawsSnapshot.forEach(doc => {
+          totalWithdraws += doc.data().amount;
+        });
+        totalWithdrawsEl.textContent = `UGX ${totalWithdraws.toLocaleString()}`;
+
+        // Calculate company profit
+        // Profit = (Total Deposits) - (Total Withdraws) + (10% fee on all withdraws)
+        const feeEarnings = totalWithdraws * 0.1;
+        companyProfit = totalDeposits - totalWithdraws + feeEarnings;
+        companyProfitEl.textContent = `UGX ${Math.round(companyProfit).toLocaleString()}`;
+      } catch (error) {
+        console.error("Error fetching financial totals:", error);
+      }
     }
-  }
 
-  async function markDepositAsPaid(depositId, amount, userId) {
-    if (!confirm("Mark this deposit as paid and reward referrer if applicable?")) return;
+    async function fetchDeposits() {
+      const snapshot = await db.collection("deposits").where("status", "==", "pending").get();
+      depositList.innerHTML = "";
 
-    try {
-      const depositRef = db.collection("deposits").doc(depositId);
-      const userRef = db.collection("users").doc(userId);
-      const userSnap = await userRef.get();
-      if (!userSnap.exists) throw new Error("User not found");
+      if (snapshot.empty) {
+        depositList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending deposits found</p></div>`;
+        return;
+      }
 
-      const userData = userSnap.data();
-      await depositRef.update({ status: "paid" });
+      for (const doc of snapshot.docs) {
+        const deposit = doc.data();
+        const userSnap = await db.collection("users").doc(deposit.userId).get();
+        const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
 
-      const totalDeposit = (userData.totalDeposit || 0) + amount;
-      const uninvested = (userData.uninvestedDeposit || 0) + amount;
+        const div = document.createElement("div");
+        div.className = "card deposit";
+        div.innerHTML = `
+          <p><strong>Amount:</strong> UGX ${deposit.amount.toLocaleString()}</p>
+          <p><strong>Method:</strong> ${deposit.method}</p>
+          <p><strong>Phone:</strong> ${deposit.phone}</p>
+          <p><strong>Sim Card Owner:</strong> ${deposit.simCardOwner}</p>
+          <p><strong>User:</strong> ${user.name} (${user.phone})</p>
+          <p><strong>Status:</strong> <span class="status-badge status-pending">${deposit.status}</span></p>
+          <div class="action-buttons">
+            <button class="btn approve-btn" onclick="markDepositAsPaid('${doc.id}', ${deposit.amount}, '${deposit.userId}')">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn reject-btn" onclick="rejectDeposit('${doc.id}')">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          </div>`;
+        depositList.appendChild(div);
+      }
+    }
 
-      await userRef.update({
-        totalDeposit,
-        uninvestedDeposit: uninvested
-      });
+    async function markDepositAsPaid(depositId, amount, userId) {
+      if (!confirm("Mark this deposit as paid and reward referrer if applicable?")) return;
 
-      const refPhone = userData.referrerPhone;
-      if (refPhone) {
-        const refSnap = await db.collection("users").where("phone", "==", refPhone).limit(1).get();
-        if (!refSnap.empty) {
-          const refDoc = refSnap.docs[0];
-          const refId = refDoc.id;
-          const refData = refDoc.data();
-          const awardedUsers = refData.referralAwardedUsers || [];
+      try {
+        const depositRef = db.collection("deposits").doc(depositId);
+        const userRef = db.collection("users").doc(userId);
+        const userSnap = await userRef.get();
+        if (!userSnap.exists) throw new Error("User not found");
 
-          if (!awardedUsers.includes(userId)) {
-            const bonus = amount * 0.25;
-            await db.collection("earnings").add({
-              userId: refId,
-              amount: bonus,
-              type: "referral",
-              source: "Deposit Bonus",
-              refereeId: userId,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        const userData = userSnap.data();
+        await depositRef.update({ status: "paid" });
 
-            await db.collection("users").doc(refId).update({
-              totalEarnings: (refData.totalEarnings || 0) + bonus,
-              referralAwardedUsers: firebase.firestore.FieldValue.arrayUnion(userId)
-            });
+        const totalDeposit = (userData.totalDeposit || 0) + amount;
+        const uninvested = (userData.uninvestedDeposit || 0) + amount;
 
-            showNotification(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
+        await userRef.update({
+          totalDeposit,
+          uninvestedDeposit: uninvested
+        });
+
+        const refPhone = userData.referrerPhone;
+        if (refPhone) {
+          const refSnap = await db.collection("users").where("phone", "==", refPhone).limit(1).get();
+          if (!refSnap.empty) {
+            const refDoc = refSnap.docs[0];
+            const refId = refDoc.id;
+            const refData = refDoc.data();
+            const awardedUsers = refData.referralAwardedUsers || [];
+
+            if (!awardedUsers.includes(userId)) {
+              const bonus = amount * 0.25;
+              await db.collection("earnings").add({
+                userId: refId,
+                amount: bonus,
+                type: "referral",
+                source: "Deposit Bonus",
+                refereeId: userId,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+              });
+
+              await db.collection("users").doc(refId).update({
+                totalEarnings: (refData.totalEarnings || 0) + bonus,
+                referralAwardedUsers: firebase.firestore.FieldValue.arrayUnion(userId)
+              });
+
+              showNotification(`🎉 Referrer (${refPhone}) awarded UGX ${bonus.toFixed(0)}!`);
+            }
           }
         }
+
+        showNotification("✅ Deposit marked as paid.");
+        fetchDeposits();
+        fetchFinancialTotals(); // Update financial totals
+      } catch (error) {
+        console.error("❌ Error:", error);
+        showNotification("❌ Failed to approve deposit.", false);
+      }
+    }
+
+async function fetchWithdraws() {
+      const snapshot = await db.collection("withdraws").where("status", "==", "pending").get();
+      withdrawList.innerHTML = "";
+
+      if (snapshot.empty) {
+        withdrawList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending withdraws found</p></div>`;
+        return;
       }
 
-      showNotification("✅ Deposit marked as paid.");
-      fetchDeposits();
-    } catch (error) {
-      console.error("❌ Error:", error);
-      showNotification("❌ Failed to approve deposit.", false);
-    }
-  }
+      for (const doc of snapshot.docs) {
+        const withdraw = doc.data();
+        const userSnap = await db.collection("users").doc(withdraw.userId).get();
+        const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
 
-  async function fetchWithdraws() {
-    const snapshot = await db.collection("withdraws").where("status", "==", "pending").get();
-    withdrawList.innerHTML = "";
+        // Calculate fee and net amount
+        const fee = withdraw.amount * 0.1;
+        const netAmount = withdraw.amount - fee;
 
-    if (snapshot.empty) {
-      withdrawList.innerHTML = `<div class="no-items"><i class="fas fa-inbox"></i><p>No pending withdraws found</p></div>`;
-      return;
-    }
-
-    for (const doc of snapshot.docs) {
-      const withdraw = doc.data();
-      const userSnap = await db.collection("users").doc(withdraw.userId).get();
-      const user = userSnap.exists ? userSnap.data() : { name: "Unknown", phone: "N/A" };
-
-      const div = document.createElement("div");
-      div.className = "card withdraw";
-      div.innerHTML = `
-        <p><strong>Amount:</strong> UGX ${withdraw.amount.toLocaleString()}</p>
-        <p><strong>To Phone:</strong> ${withdraw.phone}</p>
-        <p><strong>Holder:</strong> ${withdraw.holder}</p>
-        <p><strong>User:</strong> ${user.name} (${user.phone})</p>
-        <p><strong>Status:</strong> <span class="status-badge status-pending">${withdraw.status}</span></p>
-        <div class="action-buttons">
-          <button class="btn approve-btn" onclick="markWithdrawAsPaid('${doc.id}')">
-            <i class="fas fa-check"></i> Approve
-          </button>
-          <button class="btn reject-btn" onclick="rejectWithdraw('${doc.id}')">
-            <i class="fas fa-times"></i> Reject
-          </button>
-        </div>`;
-      withdrawList.appendChild(div);
-    }
-  }
-
-  async function markWithdrawAsPaid(id) {
-    if (!confirm("Mark this withdraw as paid?")) return;
-
-    try {
-      const withdrawRef = db.collection("withdraws").doc(id);
-      const withdrawSnap = await withdrawRef.get();
-      if (!withdrawSnap.exists) throw new Error("Withdraw not found");
-
-      const data = withdrawSnap.data();
-      const amount = data.amount;
-      const userId = data.userId;
-
-      await withdrawRef.update({ status: "paid" });
-
-      const userRef = db.collection("users").doc(userId);
-      const userSnap = await userRef.get();
-      if (userSnap.exists) {
-        const userData = userSnap.data();
-        const totalWithdraw = (userData.totalWithdraw || 0) + amount;
-        await userRef.update({ totalWithdraw });
+        const div = document.createElement("div");
+        div.className = "card withdraw";
+        div.innerHTML = `
+          <p><strong>Requested:</strong> UGX ${withdraw.amount.toLocaleString()}</p>
+          <p><strong>Fee (10%):</strong> <span class="fee-highlight">UGX ${fee.toLocaleString()}</span></p>
+          <p><strong>Net Amount:</strong> UGX ${netAmount.toLocaleString()}</p>
+          <p><strong>To Phone:</strong> ${withdraw.phone}</p>
+          <p><strong>Holder:</strong> ${withdraw.holder}</p>
+          <p><strong>User:</strong> ${user.name} (${user.phone})</p>
+          <p><strong>Status:</strong> <span class="status-badge status-pending">${withdraw.status}</span></p>
+          <div class="action-buttons">
+            <button class="btn approve-btn" onclick="markWithdrawAsPaid('${doc.id}', ${withdraw.amount})">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn reject-btn" onclick="rejectWithdraw('${doc.id}')">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          </div>`;
+        withdrawList.appendChild(div);
       }
-
-      showNotification("✅ Withdraw marked as paid.");
-      fetchWithdraws();
-    } catch (error) {
-      console.error("❌ Error approving withdraw:", error);
-      showNotification("❌ Failed to approve withdraw.", false);
     }
-  }
 
-  async function rejectDeposit(id) {
-    if (!confirm("Reject this deposit?")) return;
-    try {
-      await db.collection("deposits").doc(id).update({ status: "rejected" });
-      showNotification("🚫 Deposit rejected.");
-      fetchDeposits();
-    } catch (error) {
-      console.error("❌", error);
-      showNotification("❌ Failed to reject deposit.", false);
+    async function markWithdrawAsPaid(id, amount) {
+      if (!confirm("Mark this withdraw as paid?")) return;
+
+      try {
+        const withdrawRef = db.collection("withdraws").doc(id);
+        const withdrawSnap = await withdrawRef.get();
+        if (!withdrawSnap.exists) throw new Error("Withdraw not found");
+
+        const data = withdrawSnap.data();
+        const userId = data.userId;
+
+        await withdrawRef.update({ status: "paid" });
+
+        const userRef = db.collection("users").doc(userId);
+        const userSnap = await userRef.get();
+        if (userSnap.exists) {
+          const userData = userSnap.data();
+          const totalWithdraw = (userData.totalWithdraw || 0) + amount;
+          await userRef.update({ totalWithdraw });
+        }
+
+        showNotification("✅ Withdraw marked as paid.");
+        fetchWithdraws();
+        fetchFinancialTotals(); // Update financial totals
+      } catch (error) {
+        console.error("❌ Error approving withdraw:", error);
+        showNotification("❌ Failed to approve withdraw.", false);
+      }
     }
-  }
 
-  async function rejectWithdraw(id) {
-    if (!confirm("Reject this withdraw?")) return;
-    try {
-      await db.collection("withdraws").doc(id).update({ status: "rejected" });
-      showNotification("🚫 Withdraw rejected.");
-      fetchWithdraws();
-    } catch (error) {
-      console.error("❌", error);
-      showNotification("❌ Failed to reject withdraw.", false);
+    async function rejectDeposit(id) {
+      if (!confirm("Reject this deposit?")) return;
+      try {
+        await db.collection("deposits").doc(id).update({ status: "rejected" });
+        showNotification("🚫 Deposit rejected.");
+        fetchDeposits();
+      } catch (error) {
+        console.error("❌", error);
+        showNotification("❌ Failed to reject deposit.", false);
+      }
     }
-  }
 
-  fetchDeposits();
-  fetchWithdraws();
-  
+    async function rejectWithdraw(id) {
+      if (!confirm("Reject this withdraw?")) return;
+      try {
+        await db.collection("withdraws").doc(id).update({ status: "rejected" });
+        showNotification("🚫 Withdraw rejected.");
+        fetchWithdraws();
+      } catch (error) {
+        console.error("❌", error);
+        showNotification("❌ Failed to reject withdraw.", false);
+      }
+    }
+
+    // Initialize the dashboard
+    fetchDeposits();
+    fetchWithdraws();
+    fetchFinancialTotals();
+
+    // Admin Login Verification
+    const allowedAdmins = [
+      "muhwezimathew@gmail.com",
+      "byamukamambabazimentor2@gmail.com"
+    ];
+
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user || !allowedAdmins.includes(user.email)) {
+        alert("Access denied. Please log in with an authorized admin account.");
+        window.location.href = "login.html";
+      }
+    });
   </script>
-  <!-- 🔐 Admin Login Verification -->
-<script>
-  const allowedAdmins = [
-    "muhwezimathew@gmail.com",
-    "byamukamambabazimentor2@gmail.com"
-  ];
-
-  firebase.auth().onAuthStateChanged((user) => {
-    if (!user || !allowedAdmins.includes(user.email)) {
-      alert("Access denied. Please log in with an authorized admin account.");
-      window.location.href = "login.html";
-    }
-  });
-</script>
 </body>
 </html>
